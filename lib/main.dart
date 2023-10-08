@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-// Entry point of the Flutter application
 void main() {
   runApp(const MyApp());
 }
 
-// Main application widget
 class MyApp extends StatelessWidget {
   const MyApp({Key? key});
 
   @override
   Widget build(BuildContext context) {
-    // ChangeNotifierProvider to manage the app's state
     return ChangeNotifierProvider(
       create: (_) => MyAppState(),
       child: MaterialApp(
@@ -31,7 +28,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Task class to represent individual tasks
 class Task {
   final String title;
   bool completed;
@@ -39,31 +35,26 @@ class Task {
   Task(this.title, this.completed);
 }
 
-// ChangeNotifier class to manage the app's state
 class MyAppState extends ChangeNotifier {
   int selectedIndex = 0;
   final List<Task> pendingTasks = [];
   final List<Task> completedTasks = [];
 
-  // Method to select the current page
   void selectPage(int index) {
     selectedIndex = index;
     notifyListeners();
   }
 
-  // Method to add a task
   void addTask(Task task) {
     pendingTasks.add(task);
     notifyListeners();
   }
 
-  // Method to mark a task as completed
   void completeTask(int index) {
     completedTasks.add(pendingTasks.removeAt(index));
     notifyListeners();
   }
 
-  // Method to mark a completed task as incomplete
   void markTaskIncomplete(int index) {
     final task = completedTasks.removeAt(index);
     task.completed = false;
@@ -72,35 +63,62 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
-// Main screen of the app
 class MyHomePage extends StatelessWidget {
   const MyHomePage({Key? key});
 
   @override
   Widget build(BuildContext context) {
-    // Obtaining the app's state using context.watch
     final appState = context.watch<MyAppState>();
 
     return Scaffold(
-      body: Row(
-        children: <Widget>[
-          // NavigationRail widget for selecting different pages
-          NavigationRail(
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.pending_actions),
-                label: Text('Pending Tasks'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.done),
-                label: Text('Completed'),
-              ),
-            ],
-            selectedIndex: appState.selectedIndex,
-            onDestinationSelected: appState.selectPage,
-          ),
-          Expanded(
-            child: CustomScrollView(
+      body: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          if (constraints.maxWidth > 400) {
+            // For web (large screens)
+            return Row(
+              children: <Widget>[
+                NavigationRail(
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.pending_actions),
+                      label: Text('Pending Tasks'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.done),
+                      label: Text('Completed'),
+                    ),
+                  ],
+                  selectedIndex: appState.selectedIndex,
+                  onDestinationSelected: appState.selectPage,
+                ),
+                Expanded(
+                  child: CustomScrollView(
+                    slivers: <Widget>[
+                      SliverAppBar(
+                        expandedHeight: 80.0,
+                        backgroundColor: Colors.blue,
+                        floating: false,
+                        pinned: true,
+                        flexibleSpace: FlexibleSpaceBar(
+                          title: Text(
+                            appState.selectedIndex == 0 ? 'Pending Tasks' : 'Completed Tasks',
+                            style: const TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SliverFillRemaining(
+                        child: TaskList(isPending: appState.selectedIndex == 0),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          } else {
+            // For mobile (small screens)
+            return CustomScrollView(
               slivers: <Widget>[
                 SliverAppBar(
                   expandedHeight: 80.0,
@@ -120,23 +138,36 @@ class MyHomePage extends StatelessWidget {
                   child: TaskList(isPending: appState.selectedIndex == 0),
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          }
+        },
       ),
-      // Floating action button (plus sign) based on the selected page
       floatingActionButton: appState.selectedIndex == 0
           ? FloatingActionButton(
               onPressed: () => _showAddTaskDialog(context, appState),
               child: const Icon(Icons.add),
             )
           : null,
+      bottomNavigationBar: MediaQuery.of(context).size.width > 400
+          ? null
+          : BottomNavigationBar(
+              currentIndex: appState.selectedIndex,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.pending_actions),
+                  label: 'Pending Tasks',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.done),
+                  label: 'Completed',
+                ),
+              ],
+              onTap: appState.selectPage,
+            ),
     );
   }
 
-  // Method to show a dialog for adding a new task
   Future<void> _showAddTaskDialog(BuildContext context, MyAppState appState) async {
-    // Controllers and variables for input fields
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
     DateTime? selectedDate;
@@ -160,7 +191,6 @@ class MyHomePage extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () async {
-                  // Showing a date picker dialog to select a due date
                   final pickedDate = await showDatePicker(
                     context: context,
                     initialDate: DateTime.now(),
@@ -194,7 +224,6 @@ class MyHomePage extends StatelessWidget {
             TextButton(
               child: const Text('Add'),
               onPressed: () {
-                // Creating a new task and adding it to the app's state
                 final taskTitle = titleController.text.trim();
                 final taskDescription = descriptionController.text.trim();
                 final taskDueDate = dueDateController.text.trim();
@@ -213,7 +242,6 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
-// Widget for displaying a list of tasks
 class TaskList extends StatelessWidget {
   const TaskList({Key? key, required this.isPending}) : super(key: key);
 
@@ -221,7 +249,6 @@ class TaskList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Obtaining the app's state using context.watch
     final appState = context.watch<MyAppState>();
     final tasks = isPending ? appState.pendingTasks : appState.completedTasks;
 
