@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+// Entry point of the Flutter application
 void main() {
   runApp(const MyApp());
 }
 
+// Main application widget
 class MyApp extends StatelessWidget {
   const MyApp({Key? key});
 
   @override
   Widget build(BuildContext context) {
+    // ChangeNotifierProvider to manage the app's state
     return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
+      create: (_) => MyAppState(),
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData.from(
           colorScheme: ColorScheme.fromSwatch(
             primarySwatch: Colors.blue,
-            backgroundColor: Colors.white,
+            backgroundColor: const Color(0xFFF6F6F6),
           ),
           useMaterial3: true,
         ),
@@ -28,6 +31,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// Task class to represent individual tasks
 class Task {
   final String title;
   bool completed;
@@ -35,69 +39,52 @@ class Task {
   Task(this.title, this.completed);
 }
 
+// ChangeNotifier class to manage the app's state
 class MyAppState extends ChangeNotifier {
   int selectedIndex = 0;
   final List<Task> pendingTasks = [];
   final List<Task> completedTasks = [];
 
+  // Method to select the current page
   void selectPage(int index) {
     selectedIndex = index;
     notifyListeners();
   }
 
+  // Method to add a task
   void addTask(Task task) {
     pendingTasks.add(task);
     notifyListeners();
   }
 
+  // Method to mark a task as completed
   void completeTask(int index) {
     completedTasks.add(pendingTasks.removeAt(index));
     notifyListeners();
   }
 
+  // Method to mark a completed task as incomplete
   void markTaskIncomplete(int index) {
-    Task task = completedTasks.removeAt(index);
+    final task = completedTasks.removeAt(index);
     task.completed = false;
     pendingTasks.add(task);
     notifyListeners();
   }
 }
 
-class MyHomePage extends StatefulWidget {
+// Main screen of the app
+class MyHomePage extends StatelessWidget {
   const MyHomePage({Key? key});
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final TextEditingController dueDateController = TextEditingController();
-
-  @override
   Widget build(BuildContext context) {
+    // Obtaining the app's state using context.watch
     final appState = context.watch<MyAppState>();
-
-    Widget page;
-    String appBarText;
-    bool showAddButton = false;
-
-    switch (appState.selectedIndex) {
-      case 0:
-        page = const TaskList(isPending: true);
-        appBarText = 'Pending Tasks';
-        showAddButton = true;
-        break;
-      case 1:
-        page = const TaskList(isPending: false);
-        appBarText = 'Completed Tasks';
-        break;
-      default:
-        throw UnimplementedError("No page for index ${appState.selectedIndex}");
-    }
 
     return Scaffold(
       body: Row(
         children: <Widget>[
+          // NavigationRail widget for selecting different pages
           NavigationRail(
             destinations: const [
               NavigationRailDestination(
@@ -110,9 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
             selectedIndex: appState.selectedIndex,
-            onDestinationSelected: (value) {
-              appState.selectPage(value);
-            },
+            onDestinationSelected: appState.selectPage,
           ),
           Expanded(
             child: CustomScrollView(
@@ -124,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   pinned: true,
                   flexibleSpace: FlexibleSpaceBar(
                     title: Text(
-                      appBarText,
+                      appState.selectedIndex == 0 ? 'Pending Tasks' : 'Completed Tasks',
                       style: const TextStyle(
                         color: Colors.white,
                       ),
@@ -132,28 +117,30 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 SliverFillRemaining(
-                  child: page,
+                  child: TaskList(isPending: appState.selectedIndex == 0),
                 ),
               ],
             ),
           ),
         ],
       ),
-      floatingActionButton: showAddButton
+      // Floating action button (plus sign) based on the selected page
+      floatingActionButton: appState.selectedIndex == 0
           ? FloatingActionButton(
-              onPressed: () {
-                _showAddTaskDialog(context, appState);
-              },
+              onPressed: () => _showAddTaskDialog(context, appState),
               child: const Icon(Icons.add),
             )
           : null,
     );
   }
 
+  // Method to show a dialog for adding a new task
   Future<void> _showAddTaskDialog(BuildContext context, MyAppState appState) async {
+    // Controllers and variables for input fields
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
     DateTime? selectedDate;
+    final TextEditingController dueDateController = TextEditingController();
 
     await showDialog(
       context: context,
@@ -173,6 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               TextButton(
                 onPressed: () async {
+                  // Showing a date picker dialog to select a due date
                   final pickedDate = await showDatePicker(
                     context: context,
                     initialDate: DateTime.now(),
@@ -181,10 +169,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
 
                   if (pickedDate != null) {
-                    setState(() {
-                      selectedDate = pickedDate;
-                      dueDateController.text = DateFormat('yyyy-MM-dd').format(selectedDate!);
-                    });
+                    selectedDate = pickedDate;
+                    dueDateController.text = DateFormat('yyyy-MM-dd').format(selectedDate!);
                   }
                 },
                 child: Text(selectedDate != null
@@ -208,12 +194,13 @@ class _MyHomePageState extends State<MyHomePage> {
             TextButton(
               child: const Text('Add'),
               onPressed: () {
-                String taskTitle = titleController.text.trim();
-                String taskDescription = descriptionController.text.trim();
-                String taskDueDate = dueDateController.text.trim();
+                // Creating a new task and adding it to the app's state
+                final taskTitle = titleController.text.trim();
+                final taskDescription = descriptionController.text.trim();
+                final taskDueDate = dueDateController.text.trim();
 
                 if (taskTitle.isNotEmpty) {
-                  Task task = Task('$taskTitle\n$taskDescription\nDue: $taskDueDate', false);
+                  final task = Task('$taskTitle\n$taskDescription\nDue: $taskDueDate', false);
                   appState.addTask(task);
                 }
                 Navigator.of(context).pop();
@@ -226,6 +213,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+// Widget for displaying a list of tasks
 class TaskList extends StatelessWidget {
   const TaskList({Key? key, required this.isPending}) : super(key: key);
 
@@ -233,6 +221,7 @@ class TaskList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Obtaining the app's state using context.watch
     final appState = context.watch<MyAppState>();
     final tasks = isPending ? appState.pendingTasks : appState.completedTasks;
 
@@ -240,34 +229,31 @@ class TaskList extends StatelessWidget {
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final task = tasks[index];
-        final titleStyle = const TextStyle(
-          fontSize: 18.0,
-          fontWeight: FontWeight.bold,
-        );
-        final descriptionStyle = const TextStyle(
-          fontSize: 14.0,
-          color: Colors.grey,
-        );
-        final dueDateStyle = const TextStyle(
-          fontSize: 14.0,
-          color: Colors.grey,
-        );
 
         return ListTile(
           title: Text(
             task.title.split('\n')[0],
-            style: titleStyle,
+            style: const TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 task.title.split('\n')[1],
-                style: descriptionStyle,
+                style: const TextStyle(
+                  fontSize: 14.0,
+                  color: Colors.grey,
+                ),
               ),
               Text(
                 task.title.split('\n')[2],
-                style: dueDateStyle,
+                style: const TextStyle(
+                  fontSize: 14.0,
+                  color: Colors.grey,
+                ),
               ),
             ],
           ),
