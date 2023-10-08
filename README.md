@@ -17,10 +17,14 @@ Before you begin, ensure you have Flutter and Dart installed on your development
 2. Navigate to the project directory.
 
    ```bash
-   cd flutter-task-manager-app
+   cd ~/path/to/directory
    ```
 
 3. Run the app on an emulator or a physical device.
+
+   ```bash
+   export PATH="$PATH:`pwd`/flutter/bin"
+   ```
 
    ```bash
    flutter run
@@ -56,4 +60,3 @@ Click on "Completed" to view your completed tasks. You can mark a task as incomp
 
 ### Contributors
 Carlo Pastor Montrucchio
-
