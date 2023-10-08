@@ -42,16 +42,16 @@ To select a due date for a task, click the "Select Due Date" button when adding 
 
 Click "Add" to add the task to your pending tasks list.
 
-Click on "Pending Tasks" to view your pending tasks. You can mark a task as completed by checking the checkbox.
+Click on "Pending Tasks" to view your pending tasks. You can mark a task as completed by checking the checkbox. This will make it appear in the "Completed" page.
 
-Click on "Completed" to view your completed tasks. You can mark a task as incomplete by clicking the close icon. This will cause it to go back to "Pending Tasks".
+Click on "Completed" to view your completed tasks. You can mark a task as incomplete by clicking the close icon. This will cause it to go back to "Pending Tasks" page.
 
 
-### Dependencies
+### Dependencies (included in pubspec.yaml)
 
-flutter
-provider
-intl
+ - flutter
+ - provider
+ - intl
 
 
 ### Contributors
