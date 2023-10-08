@@ -27,11 +27,31 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class Task {
+  final String title;
+  bool completed;
+
+  Task(this.title, this.completed);
+}
+
 class MyAppState extends ChangeNotifier {
   int selectedIndex = 0;
+  List<Task> pendingTasks = [];
+  List<Task> completedTasks = [];
 
   void selectPage(int index) {
     selectedIndex = index;
+    notifyListeners();
+  }
+
+  void addTask(String title) {
+    pendingTasks.add(Task(title, false));
+    notifyListeners();
+  }
+
+  void completeTask(int index) {
+    completedTasks.add(pendingTasks[index]);
+    pendingTasks.removeAt(index);
     notifyListeners();
   }
 }
@@ -50,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     Widget page;
     String appBarText;
-    
+
     switch (appState.selectedIndex) {
       case 0:
         page = const PendingTasks();
@@ -110,10 +130,45 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: loggic for adding new task
+          _showAddTaskDialog(context, appState);
         },
         child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  Future<void> _showAddTaskDialog(BuildContext context, MyAppState appState) async {
+    final TextEditingController taskController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add Task'),
+          content: TextField(
+            controller: taskController,
+            decoration: InputDecoration(hintText: 'Enter task'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Add'),
+              onPressed: () {
+                String taskTitle = taskController.text.trim();
+                if (taskTitle.isNotEmpty) {
+                  appState.addTask(taskTitle);
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -123,9 +178,21 @@ class PendingTasks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement pending tasks
-    return const Center(
-      child: Text('Pending Tasks Page'),
+    final appState = context.watch<MyAppState>();
+
+    return ListView.builder(
+      itemCount: appState.pendingTasks.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(appState.pendingTasks[index].title),
+          leading: Checkbox(
+            value: appState.pendingTasks[index].completed,
+            onChanged: (value) {
+              appState.completeTask(index);
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -135,9 +202,16 @@ class CompletedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement completed tasks
-    return const Center(
-      child: Text('Completed Tasks Page'),
+    final appState = context.watch<MyAppState>();
+
+    return ListView.builder(
+      itemCount: appState.completedTasks.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(appState.completedTasks[index].title),
+          leading: Icon(Icons.check),
+        );
+      },
     );
   }
 }
