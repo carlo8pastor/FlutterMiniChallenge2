@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
 class Task {
   final String title;
   bool completed;
-
+  //Majd
   Task(this.title, this.completed);
 }
 
@@ -54,6 +54,7 @@ class MyAppState extends ChangeNotifier {
   }
 
   // Method to add a new task
+  //Majd
   void addTask(Task task) {
     pendingTasks.add(task);
     notifyListeners();
@@ -84,6 +85,7 @@ class MyHomePage extends StatelessWidget {
     final appState = context.watch<MyAppState>();
 
     // Building the app's UI
+    //Majd
     return Scaffold(
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
@@ -258,8 +260,9 @@ class MyHomePage extends StatelessWidget {
                 final taskTitle = titleController.text.trim();
                 final taskDescription = descriptionController.text.trim();
                 final taskDueDate = dueDateController.text.trim();
-
+                //Majd
                 if (taskTitle.isNotEmpty) {
+                  //Majd
                   final task = Task('$taskTitle\n$taskDescription\nDue: $taskDueDate', false);
                   appState.addTask(task);
                 }
@@ -286,6 +289,7 @@ class TaskList extends StatelessWidget {
     final tasks = isPending ? appState.pendingTasks : appState.completedTasks;
 
     // Building the task list
+    //Majd
     return ListView.builder(
       itemCount: tasks.length,
       itemBuilder: (context, index) {
