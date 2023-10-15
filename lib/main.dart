@@ -1,5 +1,5 @@
 // Note: For now, Bottom Navigation Bar works on MacOS and Chrome but not iOS simulator.
-
+//majd
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
